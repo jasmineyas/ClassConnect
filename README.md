@@ -4,7 +4,8 @@
 
 - [x] Define key user stories 
 - [x] Define MVP scope 
-- [ ] Create mocks for the MVP - very simple one page app. 
+- [X] Create mocks for the MVP - very simple one page app. 
+------> ended up not being so simple...
 - [X] Define a simple databse schema 
 - [ ] Look into the hashing algorithm for student IDs 
 - [ ] Set up the react app 
