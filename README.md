@@ -6,6 +6,8 @@
 - [x] Define MVP scope 
 - [X] Create mocks for the MVP - very simple one page app. 
 ------> ended up not being so simple...
+![mock](mock.png)
+![mock with components](mvp-mock-with-components.png)
 - [X] Define a simple databse schema 
 - [ ] Look into the hashing algorithm for student IDs 
 - [ ] Set up the react app 
