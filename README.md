@@ -10,9 +10,26 @@
 ![mock with components](mvp-mock-with-components.png)
 - [X] Define a simple databse schema 
 - [ ] Look into the hashing algorithm for student IDs 
-- [ ] Set up the react app 
-- [ ] Define the states and functionality 
-- [ ] Add styling 
+- [IP] Set up the react app 
+- [IP] Define the states and functionality 
+- [ ] Breakdown tasks
+- V1
+    - [IP ] create file uploader component
+        - [ ] figure out where the file gets uploaded to google cloud
+        - [ ] need to implement a backend...
+        - [ ] how to implement the logic of parsing the uploaded csv info
+    - [ ] create input form component 
+    - [ ] create submit button 
+    - [ ] create a hidden success screen
+    - [ ] create the hashing algorithm 
+    - [ ] create the matching logic 
+- V2 
+    -  [ ] create stats bar compoenent 
+    -  [ ] add the logic for getting the stats
+- V3
+    - [ ] create footer component 
+- V4 
+     - [ ] Add styling 
 - [ ] Define test flows 
 - [ ] Carry out the test flows 
 - [ ] Invite beta testers 
@@ -47,5 +64,17 @@
     * instruction_format: string #{lecture,lecture, discussion}
     * section_id: string #UniqueSectionID
     * number_of_students: number #for each section 
-    * contained_users: array of user_ids 
-    
+    * contained_users: array of user_hased_ids and user_contacts 
+    *                  [[User_hashed_id, user_name, various_User_contact_info],
+    *                   [User_hashed_id, user_name, various_User_contact_info],
+    *                    ...]
+
+# Component Hierachy: 
+ ├──header (component)
+ ├──statsDisplay (component)
+ ├──mainContent(component)
+    ├──fileUploader (component)
+    ├──contactForm (component)
+ └──footer (component)
+
+
