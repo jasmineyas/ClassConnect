@@ -14,13 +14,12 @@
 - [IP] Define the states and functionality 
 - [ ] Breakdown tasks
 - V1
-    - [IP ] create file uploader component
+    - [IP] create file uploader component
+    - [ ] create input form component 
+    - [ ] create a hidden success screen
         - [ ] figure out where the file gets uploaded to google cloud
         - [ ] need to implement a backend...
         - [ ] how to implement the logic of parsing the uploaded csv info
-    - [ ] create input form component 
-    - [ ] create submit button 
-    - [ ] create a hidden success screen
     - [ ] create the hashing algorithm 
     - [ ] create the matching logic 
 - V2 
@@ -65,9 +64,9 @@
     * section_id: string #UniqueSectionID
     * number_of_students: number #for each section 
     * contained_users: array of user_hased_ids and user_contacts 
-    *                  [[User_hashed_id, user_name, various_User_contact_info],
-    *                   [User_hashed_id, user_name, various_User_contact_info],
-    *                    ...]
+        * [[User_hashed_id, user_name, various_User_contact_info],
+        * [User_hashed_id, user_name, various_User_contact_info],
+        * ...]
 
 # Component Hierachy: 
  ├──header (component)
