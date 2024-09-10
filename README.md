@@ -14,13 +14,12 @@
 - [IP] Define the states and functionality 
 - [ ] Breakdown tasks
 - V1
-    - [IP ] create file uploader component
+    - [IP - some bug] create file uploader component
+    - [X] create input form component 
+    - [X] create a hidden success screen
         - [ ] figure out where the file gets uploaded to google cloud
         - [ ] need to implement a backend...
         - [ ] how to implement the logic of parsing the uploaded csv info
-    - [ ] create input form component 
-    - [ ] create submit button 
-    - [ ] create a hidden success screen
     - [ ] create the hashing algorithm 
     - [ ] create the matching logic 
 - V2 
@@ -29,7 +28,7 @@
 - V3
     - [ ] create footer component 
 - V4 
-     - [ ] Add styling 
+     - [ ] Add styling to everything...
 - [ ] Define test flows 
 - [ ] Carry out the test flows 
 - [ ] Invite beta testers 
@@ -65,16 +64,8 @@
     * section_id: string #UniqueSectionID
     * number_of_students: number #for each section 
     * contained_users: array of user_hased_ids and user_contacts 
-    *                  [[User_hashed_id, user_name, various_User_contact_info],
-    *                   [User_hashed_id, user_name, various_User_contact_info],
-    *                    ...]
-
-# Component Hierachy: 
- ├──header (component)
- ├──statsDisplay (component)
- ├──mainContent(component)
-    ├──fileUploader (component)
-    ├──contactForm (component)
- └──footer (component)
+        * [[User_hashed_id, user_name, various_User_contact_info],
+        * [User_hashed_id, user_name, various_User_contact_info],
+        * ...]
 
 
