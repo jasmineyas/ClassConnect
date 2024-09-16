@@ -10,15 +10,15 @@
       ![mock with components](/docs/mvp-mock-with-components.png)
 - [x] Define a simple databse schema
 - [ ] Look into the hashing algorithm for student IDs
-- [IP] Set up the react app
-- [IP] Define the states and functionality
-- [ ] Breakdown tasks
+- [X] Set up the react app
+- [X] Define the states and functionality
+- [X] Breakdown tasks
 - V1
   - [IP - some bug] create file uploader component
   - [x] create input form component
   - [x] create a hidden success screen
-    - [ ] figure out where the file gets uploaded to google cloud
-    - [ ] need to implement a backend: Python with Flask - as it's lightweight and minimalistic. I dont' think I will see super high traffic with this app.
+    - [] figure out where the file gets uploaded to google cloud
+    - [IP] need to implement a backend: Python with Flask - as it's lightweight and minimalistic. I dont' think I will see super high traffic with this app.
     - [ ] how to implement the logic of parsing the uploaded csv info
   - [ ] create the hashing algorithm
   - [ ] create the matching logic
