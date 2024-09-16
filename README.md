@@ -23,10 +23,9 @@
   - [ ] create the hashing algorithm
   - [ ] create the matching logic
 - V2
-  - [ ] create stats bar compoenent
-  - [ ] add the logic for getting the stats
+  - [ ] add the logic for getting the stats bar component
 - V3
-  - [ ] create footer component
+  - [ ] add privacy note pop up
 - V4
   - [ ] Add styling to everything...
 - [ ] Define test flows
