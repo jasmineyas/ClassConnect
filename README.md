@@ -9,7 +9,7 @@
       ![mock](/docs/mock.png)
       ![mock with components](/docs/mvp-mock-with-components.png)
 - [x] Define a simple databse schema
-- [ ] Look into the hashing algorithm for student IDs
+- [X] Look into the hashing algorithm for student IDs
 - [X] Set up the react app
 - [X] Define the states and functionality
 - [X] Breakdown tasks
@@ -20,15 +20,28 @@
     - [] figure out where the file gets uploaded to google cloud
     - [IP] need to implement a backend: Python with Flask - as it's lightweight and minimalistic. I dont' think I will see super high traffic with this app.
     - [ ] how to implement the logic of parsing the uploaded csv info
-  - [ ] create the hashing algorithm
+    - [ ] how to store the processed student and course info 
+  - [X] create the hashing algorithm - no need to create...use existing ones lol MD5
   - [ ] create the matching logic
+  - [ ] NOTE: Not only look up the course in this term, but connect you with students of next term as well. I think this is not rly a V5 but it's something very easy that MVP should be able to do. 
 - V2
   - [ ] add the logic for getting the stats bar component
 - V3
   - [ ] add privacy note pop up
 - V4
   - [ ] Add styling to everything...
-- [ ] Define test flows
+- [ ] Constraints:
+      - [ ] File has to be xlsx
+      - [ ] User has to have at least 1 way of contact info
+      - [ ] The file has to match the current format (can make it less generic i guess)
+- [ ] Define test flows - this should have been done first. Honestly. MY BAD.   
+      - [ ] testflow1: missing information in the form
+      - [ ] testflow2: excel format updated due to workday updates so processing logic breaks
+      - [ ] testflow3: wrong excel file
+      - [ ] testflow4: user update their file after iniital upload
+      - [ ] testflow5: user update their contact info
+      - [ ] testflow6: user upload a different student's schedule
+      - [ ] testflow7: 
 - [ ] Carry out the test flows
 - [ ] Invite beta testers
 - [ ] Iterate based on feedback
