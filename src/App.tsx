@@ -1,5 +1,5 @@
 import React from "react";
-import MainContent from "./Components/mainContent";
+import MainContent from "./Components/MainContent.tsx";
 import "./App.css";
 
 function App() {

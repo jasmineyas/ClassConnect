@@ -68,3 +68,13 @@
     - [[User_hashed_id, user_name, various_User_contact_info],
     - [User_hashed_id, user_name, various_User_contact_info],
     - ...]
+
+#NOTES:
+Flow for the data processing:
+
+- User fills out the form and uploads the file.
+- The frontend sends a POST request to the backend, containing the form data (firstName, lastName, etc.) and the file.
+- The backend processes the file to extract the student ID, generates the hashedID, and returns the hashed data to the frontend or stores it.
+  Why?
+  Seperation of concenrs...
+  Security... file never stays on the frontend
