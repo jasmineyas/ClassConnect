@@ -32,6 +32,7 @@
 - [ ] Carry out the test flows
 - [ ] Invite beta testers
 - [ ] Iterate based on feedback
+- [ ] Clean up readme file...
 
 # key user stories
 
