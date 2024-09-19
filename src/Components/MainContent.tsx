@@ -1,15 +1,17 @@
+import React from "react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import logo from "../logo.png";
 import GitHub from "../github.png";
 
 function AppTitle() {
-  return <img src={logo}></img>;
+  return <img src={logo} alt="logo" />;
 }
 
 function StatusBar() {
   return (
     <div>
-      <p class="status-bar">
+      <p className="status-bar">
         {" "}
         Classmates: xxxx | Course inventory: xxxx | Connected: xxxxx{" "}
       </p>
@@ -61,19 +63,37 @@ function Footer() {
   );
 }
 
+interface StudentData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  whatsapp: string;
+  hashedID?: string;
+  file: File;
+}
+
 function MainContent() {
   const [showNextStep, setShowNextStep] = useState(false);
-  const [file, setFile] = useState(null);
+  const { register, handleSubmit } = useForm<StudentData>();
 
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]); // Get the selected file
-  };
+  const onSubmit = (data: StudentData) => {
+    const formData = new FormData();
+    formData.append("firstName", data.firstName);
+    formData.append("lastName", data.lastName);
+    formData.append("email", data.email);
+    formData.append("whatsapp", data.whatsapp);
+    formData.append("file", data.file[0]);
 
-  const handleSubmit = () => {
-    // if (!file) {
-    //   alert("Please upload your workday course export csv file.");
-    //   return;
-    // }
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
+    fetch("/upload", {
+      method: "POST",
+      body: formData,
+    }).then((response) => {
+      // Handle response, get hashedID, etc.
+    });
     setShowNextStep(true);
   };
 
@@ -86,40 +106,42 @@ function MainContent() {
       <div className="main-content">
         {!showNextStep ? (
           <div>
-            <div className="file-uploader">
-              <p>
-                (1) Upload your workday course export csv file here. Not sure
-                how?
-              </p>
-              <input type="file" accept=".csv" onChange={handleFileChange} />
-            </div>
-            <div className="contact-form">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="file-uploader">
+                <p>
+                  (1) Upload your workday course export file here. Not sure how?
+                </p>
+                <input
+                  type="file"
+                  accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  {...register("file")}
+                />
+              </div>
               <p>
                 (2) Please share your contact info with your classmates. (Must
                 provide email, otherwise, why are you here?)
               </p>
               <div>
-                <label for="fname">First name: </label>
-                <input type="text" id="fname"></input>
+                <label>First name: </label>
+                <input {...register("firstName")} />
               </div>
               <div>
-                <label for="lname">Last name: </label>
-                <input type="text" id="lname"></input>
-              </div>
-
-              <div>
-                <label for="email">Email: </label>
-                <input type="text" id="email"></input>
+                <label>Last name: </label>
+                <input {...register("lastName")} />
               </div>
               <div>
-                <label for="phone">WhatsApp: </label>
-                <input type="text" id="whatsapp"></input>
+                <label>Email: </label>
+                <input {...register("email")} />
               </div>
-            </div>
-            <div className="submit-privacy">
-              <p>Privacy</p>
-              <button onClick={handleSubmit}>Submit</button>
-            </div>
+              <div>
+                <label>WhatsApp: </label>
+                <input {...register("whatsapp")} />
+              </div>
+              <div className="submit-privacy">
+                <p>Privacy</p>
+                <button type="submit">Submit</button>
+              </div>
+            </form>
             <div className="footer">
               <Footer />
             </div>
