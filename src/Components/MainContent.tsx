@@ -88,12 +88,15 @@ function MainContent() {
       console.log(`${key}: ${value}`);
     }
 
-    fetch("/upload", {
+    fetch("http://127.0.0.1:5000/upload", {
       method: "POST",
       body: formData,
-    }).then((response) => {
-      // Handle response, get hashedID, etc.
-    });
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+      });
+
     setShowNextStep(true);
   };
 
