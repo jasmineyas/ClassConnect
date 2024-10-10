@@ -73,3 +73,9 @@ a:link {
 a:hover {
   color: #ff00b9;
 }
+
+.error-message {
+  color: #ff00b9;
+  font-size: 15px;
+  font-weight: bold;
+}

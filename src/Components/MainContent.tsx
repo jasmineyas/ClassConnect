@@ -74,7 +74,11 @@ interface StudentData {
 
 function MainContent() {
   const [showNextStep, setShowNextStep] = useState(false);
-  const { register, handleSubmit } = useForm<StudentData>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StudentData>();
 
   const onSubmit = (data: StudentData) => {
     const formData = new FormData();
@@ -83,6 +87,7 @@ function MainContent() {
     formData.append("email", data.email);
     formData.append("whatsapp", data.whatsapp);
     formData.append("file", data.file[0]);
+    console.log(data.file[0]);
 
     for (let [key, value] of formData.entries()) {
       console.log(`${key}: ${value}`);
@@ -92,8 +97,15 @@ function MainContent() {
       method: "POST",
       body: formData,
     })
-      .then((response) => response.json())
-      .then((result) => {
+      .then((response) => {
+        console.log("hi");
+        console.log(response);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((result: any) => {
         console.log(result);
       });
 
@@ -117,8 +129,11 @@ function MainContent() {
                 <input
                   type="file"
                   accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  {...register("file")}
+                  {...register("file", { required: "File is required" })}
                 />
+                {errors.file && (
+                  <p className="error-message"> {errors.file.message}</p>
+                )}
               </div>
               <p>
                 (2) Please share your contact info with your classmates. (Must
@@ -126,15 +141,35 @@ function MainContent() {
               </p>
               <div>
                 <label>First name: </label>
-                <input {...register("firstName")} />
+                <input
+                  {...register("firstName", {
+                    required: "First name is required",
+                  })}
+                />
+                {errors.firstName && (
+                  <p className="error-message"> {errors.firstName.message}</p>
+                )}
               </div>
               <div>
                 <label>Last name: </label>
-                <input {...register("lastName")} />
+                <input
+                  {...register("lastName", {
+                    required: "Last name is required",
+                  })}
+                />
+                {errors.lastName && (
+                  <p className="error-message"> {errors.lastName.message}</p>
+                )}
               </div>
               <div>
                 <label>Email: </label>
-                <input {...register("email")} />
+                <input
+                  type="email"
+                  {...register("email", { required: "Email is required" })}
+                />
+                {errors.email && (
+                  <p className="error-message"> {errors.email.message}</p>
+                )}
               </div>
               <div>
                 <label>WhatsApp: </label>

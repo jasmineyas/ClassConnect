@@ -9,19 +9,20 @@
       ![mock](/docs/mock.png)
       ![mock with components](/docs/mvp-mock-with-components.png)
 - [x] Define a simple databse schema
-- [ ] Look into the hashing algorithm for student IDs
+- [x] Look into the hashing algorithm for student IDs- selected 1
 - [IP] Set up the react app
 - [IP] Define the states and functionality
-- [ ] Breakdown tasks
+- [x] Breakdown tasks
 - V1
-  - [IP - some bug] create file uploader component
+  - [x] create file uploader component - no need to create - already have one
   - [x] create input form component
   - [x] create a hidden success screen
-    - [ ] figure out where the file gets uploaded to google cloud
-    - [ ] need to implement a backend: Python with Flask - as it's lightweight and minimalistic. I dont' think I will see super high traffic with this app.
-    - [ ] how to implement the logic of parsing the uploaded csv info
-  - [ ] create the hashing algorithm
-  - [ ] create the matching logic
+    - ~~[IP ] figure out where the file gets uploaded to google cloud~~ no longer needed as we are not storing files any more.
+    - [x] need to implement a backend: Python with Flask - as it's lightweight and minimalistic. I dont' think I will see super high traffic with this app.
+    - [IP] how to implement the logic of parsing the uploaded csv info
+    - [ ] set up Heroku SQL with created tables
+    - [ ] logic to send data to SQL
+  - [ ] create qureies for matching + update
 - V2
   - [ ] add the logic for getting the stats bar component
 - V3
@@ -51,30 +52,39 @@
 
 # Database Schema:
 
-- User:
-  - full_name: string
-  - email: string
-  - hashed_id: string
-  - phone_number: number #optional
-  - discord_handle: string #optional
-  - contact_on_facebook: boolean #optional
-  - instagram_handle: string #optional
-- Course:
-  - course_listing: string #UniqueCourseID
-  - instruction_format: string #{lecture,lecture, discussion}
-  - section_id: string #UniqueSectionID
-  - number_of_students: number #for each section
-  - contained_users: array of user_hased_ids and user_contacts
-    - [[User_hashed_id, user_name, various_User_contact_info],
-    - [User_hashed_id, user_name, various_User_contact_info],
-    - ...]
+Student Table
+| COLUMN | DATA TYPE | NOTES |
+| ------ | --------- | ----- |
+| full_name | VARCHAR | Full name of the student |
+| hashed_student_id | VARCHAR | unique hashed student id for security and for identification usage |
+| email | VARCHAR | required |
+| phone_number | VARCHAR | optional |
+| whatsapp | VARCHAR | optional |
+| discord_handle | VARCHAR | optional |
+| facebook name | VARCHAR | optional |
+| instagram_handle | VARCHAR | optional |
 
-#NOTES:
-Flow for the data processing:
+Course Table
+| COLUMN | DATA TYPE | NOTES |
+| ------ | --------- | ----- |
+| course_id | VARCHAR | Unique Course ID (e.g. 'CPSC_V 121 - Models of Computation') |
+| instruction_format | VARCHAR | Lab or tutorial or lecture |
+| section_id | VARCHAR | Unique ID for the same course e.g 'L1D' |
+| start_date | DATE | course start date |
+| end_date | DATE | course end date |
+
+Enrollment Table
+| COLUMN | DATA TYPE | NOTES |
+| ------ | --------- | ----- |
+| enrollment_id | VARCHAR | Composite key of student_id, course_id, section_id, course_start_date. One stuent can only enroll in a course once in the same term, but could enroll in the same course twice in different terms. |
+| hashed_student_id | VARCHAR | unique hashed id of the student id for security |
+| course_id | VARCHAR | Unique CourseID (e.g. 'CPSC_V 121 - Models of Computation') |
+| section_id | VARCHAR | Unique ID for the same course e.g 'L1D' |
+| enrollment_date | DATE | when this was added to the database |
+
+Notes on the data processing flow:
 
 - User fills out the form and uploads the file.
 - The frontend sends a POST request to the backend, containing the form data (firstName, lastName, etc.) and the file.
-- The backend processes the file to extract the student ID, generates the hashedID, and returns the hashed data to the frontend or stores it.
-  Why?
-  Seperation of concenrs...
-  Security... file never stays on the frontend
+- The backend processes the file to extract the student ID and course information, generates the hashedID, and return a success msg / error to the front end.
+- Why? Seperation of concenrs... Security... file never stays on the frontend
