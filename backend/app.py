@@ -3,6 +3,12 @@ from flask_cors import CORS
 import os
 import hashlib
 import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__) 
 CORS(app) # enable CORS on the app
@@ -14,7 +20,6 @@ def is_my_enrolled_courses(df):
     ''' returns true if the first cell of the dataframe is "Enrolled Sections" and the first row has "My Enrolled Courses" '''
     criteria = (bool(df.head(1).isin(["Enrolled Sections"]).any().any())) and (df.columns[0] == 'My Enrolled Courses')
     return criteria
-
 
 def process_upload(file):
     '''Process the files uploaded, check if the file is indeed enrollment schedule, 
@@ -47,7 +52,26 @@ def process_upload(file):
   
 
 def store_student_info():
-    '''Store the student info and course info to the SQL database'''
+    '''Insert the student info and course info to the SQL database'''
+  # https://www.postgresqltutorial.com/postgresql-python/update/
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+
+    # Create a cursor object
+    cur = conn.cursor()
+
+    # Execute queries, e.g., select or insert data
+    cur.execute("SELECT * FROM Students;")
+    rows = cur.fetchall()
+
+    # Don't forget to close the cursor and connection
+    cur.close()
+    conn.close()
+
+    # insert student to Student table 
+
+    # insert courses to course table
+
+    # insert enrollment to enrollment table
 
     pass
 
@@ -60,7 +84,7 @@ def home():
 @app.route('/upload', methods=['GET','POST']) 
 def test_contact_info_upload():
     if request.method == 'POST':
-        '''Test displaying the contact info sent by the student'''
+        #for testing 
         first_name = request.form.get('firstName')
         last_name = request.form.get('lastName')
         email = request.form.get('email')

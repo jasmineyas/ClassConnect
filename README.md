@@ -43,19 +43,19 @@
 # MVP scope
 
 - There's a button to upload a schedule.
+- The data base work and update student schedule correctly.
 - There's a status bar to show how many people have uploaded their schedules, and list of courses and number of people in each course.
-- Hasing algorithm has to be implemented for privacy reasons.
 - There's a blurb that talk about the purpose of app and how it works (aka people get email at 5pm daily of updates).
-- [br]MVP Note! It is posisble the email update feature will be hard to implement...if it's hard...we could forgo this and just display information on the app... and we could display a message to the user to check back the next day if they don't see any matches. Or send email to users when 'five' more folks have uploaded their schedules.
-  &nbsp;&nbsp;&nbsp;&nbsp;when the database has new matches for a given users:
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Users get an email with new matches
+- MVP Note! It is posisble the email update feature will be hard to implement...if it's hard...we could forgo this and just display information on the app... and we could display a message to the user to check back the next day if they don't see any matches.
+  - Or send email to users when 'five' more folks have uploaded their schedules./ when the database has new matches for a given users / Users get an email with new matches
 
 # Database Schema:
 
 Student Table
 | COLUMN | DATA TYPE | NOTES |
 | ------ | --------- | ----- |
-| full_name | VARCHAR | Full name of the student |
+| first_name | VARCHAR | first name of the student |
+| last_name | VARCHAR | first name of the student |
 | hashed_student_id | VARCHAR | unique hashed student id for security and for identification usage |
 | email | VARCHAR | required |
 | phone_number | VARCHAR | optional |
@@ -64,22 +64,28 @@ Student Table
 | facebook name | VARCHAR | optional |
 | instagram_handle | VARCHAR | optional |
 
-Course Table
-| COLUMN | DATA TYPE | NOTES |
-| ------ | --------- | ----- |
-| course_id | VARCHAR | Unique Course ID (e.g. 'CPSC_V 121 - Models of Computation') |
-| instruction_format | VARCHAR | Lab or tutorial or lecture |
-| section_id | VARCHAR | Unique ID for the same course e.g 'L1D' |
-| start_date | DATE | course start date |
-| end_date | DATE | course end date |
+CourseSection Table
+
+| COLUMN                    | DATA TYPE | NOTES                                      |
+| ------------------------- | --------- | ------------------------------------------ |
+| course_code               | VARCHAR   | Course ID (e.g. 'CPSC_V 121')              |
+| course_name               | VARCHAR   | Course Name (e.g. 'Models of Computation') |
+| section_ID                | VARCHAR   | section ID ('101')                         |
+| (course_code, section_ID) | VARCHAR   | Composite primary key                      |
+| instruction_format        | VARCHAR   | Lab or tutorial or lecture                 |
+| meeting_patterns          | VARCHAR   | Meeting times (e.g., "MWF 9:00-10:00")     |
+| Delivery_Mode             | VARCHAR   | In-person, online, etc.                    |
+| start_date                | DATE      | course start date                          |
+| end_date                  | DATE      | course end date                            |
 
 Enrollment Table
 | COLUMN | DATA TYPE | NOTES |
 | ------ | --------- | ----- |
 | enrollment_id | VARCHAR | Composite key of student_id, course_id, section_id, course_start_date. One stuent can only enroll in a course once in the same term, but could enroll in the same course twice in different terms. |
 | hashed_student_id | VARCHAR | unique hashed id of the student id for security |
-| course_id | VARCHAR | Unique CourseID (e.g. 'CPSC_V 121 - Models of Computation') |
-| section_id | VARCHAR | Unique ID for the same course e.g 'L1D' |
+| registeration_status | VARCHAR | registered or waitlisted |
+| course_code | VARCHAR | Course code |
+| section_code | VARCHAR | 'L1D' |
 | enrollment_date | DATE | when this was added to the database |
 
 Notes on the data processing flow:
