@@ -7,7 +7,6 @@
 - [x] Create mocks for the MVP - very simple one page app.
       ------> ended up not being so simple...
       ![mock](/docs/mock.png)
-      ![mock with components](/docs/mvp-mock-with-components.png)
 - [x] Define a simple databse schema
 - [X] Look into the hashing algorithm for student IDs
 - [X] Set up the react app
