@@ -108,3 +108,7 @@ Notes on the data processing flow:
 - The frontend sends a POST request to the backend, containing the form data (firstName, lastName, etc.) and the file.
 - The backend processes the file to extract the student ID and course information, generates the hashedID, and return a success msg / error to the front end.
 - Why? Seperation of concenrs... Security... file never stays on the frontend
+
+# Notes for future
+
+- Try ORM python libraries

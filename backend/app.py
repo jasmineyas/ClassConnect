@@ -4,14 +4,17 @@ import os
 import hashlib
 import pandas as pd
 import psycopg2
+import logging 
 from dotenv import load_dotenv
 
-load_dotenv()
 
+load_dotenv()
 DATABASE_URL = os.environ['DATABASE_URL']
+conn = psycopg2.connect(DATABASE_URL)
 
 app = Flask(__name__) 
 CORS(app) # enable CORS on the app
+app.logger.setLevel(logging.DEBUG)
 
 class InvalidFileError(Exception):
     pass
@@ -37,7 +40,8 @@ def process_upload(file):
         df.rename(columns={df.columns[0]:'Hashed_student_id'}, inplace=True)
         df['Hashed_student_id'] = hashed_student_id
         course_dict = df.apply(lambda row: {
-            'Course Listing': row['Course Listing'],
+            'Course Code': row['Course Listing'].split(' - ')[0],
+            'Course Name': row['Course Listing'].split(' - ')[1],
             'Section': row['Section'],
             'Instructional Format': row['Instructional Format'],
             'Meeting Patterns': row['Meeting Patterns'],
@@ -49,9 +53,85 @@ def process_upload(file):
         return(hashed_student_id, course_dict)
     else: 
         raise InvalidFileError('ERROR - This is not a valid My Enrolled Courses file. Please upload the correct file.')
-  
 
-def store_student_info():
+
+def insert_new_student(conn, 
+                       hashed_student_id, 
+                       student_email,phone_number, 
+                       whatsapp, 
+                       first_name, 
+                       last_name, 
+                       course_dict):
+    try:
+        with conn.cursor() as cursor:
+            # Insert into Students table
+            insert_student_query = """
+            INSERT INTO Students (hashed_student_id, email, phone_number,whatsapp, first_name, last_name)
+            VALUES (%s, %s, %s);
+            """
+            cursor.execute(insert_student_query, 
+                           (hashed_student_id, 
+                            student_email, 
+                            phone_number,
+                            whatsapp, 
+                            first_name,
+                            last_name))
+            app.logger.info(f"Inserted new student: {hashed_student_id}")
+
+            # Insert into course_sections table, but first check if the course is already in the table
+            for course in course_dict:
+                if check_course_exists(conn, course_dict[course]['Course Code'], course_dict[course]['Section'], course_dict[course]['Start Date']):
+                    # Course already exists in the database
+                    continue
+                else: 
+                    insert_course_query = """
+                    INSERT INTO course_sections (course_code, section_id, course_name, instructional_format, delivery_mode, meeting_patterns, start_date, end_date)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING;
+                    """
+                    cursor.execute(insert_course_query, (
+                        course_dict[course]['Course Code'],
+                        course_dict[course]['Section'],
+                        course_dict[course]['Course Name'],
+                        course_dict[course]['Instructional Format'],
+                        course_dict[course]['Delivery Mode'],
+                        course_dict[course]['Meeting Patterns'],
+                        course_dict[course]['Start Date'],
+                        course_dict[course]['End Date']))
+                app.logger.info(f"Inserted new course: {course_dict[course]['Course Code']} section {course_dict[course]['Section']}")
+
+                                                        
+            # Insert into Enrollments table
+            for course in course_dict:
+                course_code = course_dict[course]['Course Code']
+                section_id = course_dict[course]['Section']
+                start_date = course_dict[course]['Start Date']
+                registration_status = course_dict[course]['Registration Status']
+                insert_enrollment_query = """
+                INSERT INTO Enrollments (hashed_student_id, course_code, section_id, start_date, registration_status)
+                VALUES (%s, %s, %s, %s, %s);
+                """
+                cursor.execute(insert_enrollment_query, (hashed_student_id, 
+                                                         course_code, 
+                                                         section_id, 
+                                                         start_date, 
+                                                         registration_status))
+                app.logger.info(f"Inserted new enrollment for student: {hashed_student_id} in course {course_code}, section {section_id}")
+
+        conn.commit()
+        app.logger.info(f"New student {hashed_student_id} and enrollment successfully inserted.")
+
+    except psycopg2.IntegrityError as ie:
+        conn.rollback()
+        app.logger.error(f"Integrity error occurred for student {hashed_student_id}: {ie}")
+    except psycopg2.DatabaseError as db_err:
+        conn.rollback()
+        app.logger.error(f"Database error occurred for student {hashed_student_id}: {db_err}")
+    except Exception as e:
+        conn.rollback()
+        app.logger.error(f"An unexpected error occurred for student {hashed_student_id}: {e}", exc_info=True)
+
+def update_student_info():
     '''Insert the student info and course info to the SQL database'''
   # https://www.postgresqltutorial.com/postgresql-python/update/
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
@@ -63,23 +143,118 @@ def store_student_info():
     cur.execute("SELECT * FROM Students;")
     rows = cur.fetchall()
 
-    # Don't forget to close the cursor and connection
-    cur.close()
-    conn.close()
-
-    # insert student to Student table 
+     # insert student to Student table 
 
     # insert courses to course table
 
     # insert enrollment to enrollment table
 
+
+    # Don't forget to close the cursor and connection
+    cur.close()
+    conn.close()
+
     pass
 
+def check_student_exists(conn, hashed_student_id):
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT EXISTS (SELECT 1 FROM Students WHERE hashed_student_id = %s);", (hashed_student_id,))
+        # True if the student exists, False otherwise
+        result = cursor.fetchone()[0]
+        return result
+    
+def check_course_exists(conn, course_code, section_id, start_date):
+    with conn.cursor() as cursor:
+        query = """
+        SELECT EXISTS (
+            SELECT 1 FROM course_sections 
+            WHERE course_code = %s AND section_id = %s AND start_date = %s
+        );
+        """
+        cursor.execute(query, (course_code, section_id, start_date))
+        result = cursor.fetchone()[0]  # True if course exists, False otherwise
+        return result
+    
+def fetch_student_info(conn, hashed_student_id):
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT email, phone_number FROM Students WHERE hashed_student_id = %s;", (hashed_student_id,))
+        return cursor.fetchone()  # Returns the result or None if no record is found
+
+def fetch_enrollment_info(conn, hashed_student_id, course_code, section_id, start_date):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT registration_status FROM Enrollments 
+            WHERE hashed_student_id = %s AND course_code = %s AND section_id = %s AND start_date = %s;
+            """, (hashed_student_id, course_code, section_id, start_date))
+        return cursor.fetchone()  # Returns the result or None if no record is found
+    
+def update_student(conn, hashed_student_id, student_email, phone_number):
+    with conn.cursor() as cursor:
+        update_student_query = """
+        UPDATE Students
+        SET email = %s, phone_number = %s
+        WHERE hashed_student_id = %s;
+        """
+        cursor.execute(update_student_query, (student_email, phone_number, hashed_student_id))
+
+def update_course(conn, course_code, section_id, start_date):
+    with conn.cursor() as cursor:
+        update_course_query = """
+        UPDATE course_sections
+        SET start_date = %s
+        WHERE course_code = %s AND section_id = %s;
+        """
+        cursor.execute(update_course_query, (start_date, course_code, section_id))
+
+def update_enrollment(conn, hashed_student_id, course_code, section_id, start_date, registration_status):
+    with conn.cursor() as cursor:
+        update_enrollment_query = """
+        UPDATE Enrollments
+        SET registration_status = %s
+        WHERE hashed_student_id = %s AND course_code = %s AND section_id = %s AND start_date = %s;
+        """
+        cursor.execute(update_enrollment_query, (registration_status, hashed_student_id, course_code, section_id, start_date))
+
+
+def update_student_course_enrollment(conn, hashed_student_id, new_email, new_phone_number, course_code, section_id, start_date, new_registration_status):
+    try:
+        with conn.cursor() as cursor:
+            # Fetch current student info
+            cursor.execute("SELECT email, phone_number FROM Students WHERE hashed_student_id = %s;", (hashed_student_id,))
+            student_info = cursor.fetchone()
+
+            # Fetch current enrollment info
+            cursor.execute("""
+            SELECT registration_status FROM Enrollments 
+            WHERE hashed_student_id = %s AND course_code = %s AND section_id = %s AND start_date = %s;
+            """, (hashed_student_id, course_code, section_id, start_date))
+            enrollment_info = cursor.fetchone()
+
+            # 1. Update student info if it has changed
+            if student_info and (student_info[0] != new_email or student_info[1] != new_phone_number):
+                update_student(conn, hashed_student_id, new_email, new_phone_number)
+
+            # 2. Update course and enrollment if registration status has changed
+            if enrollment_info and enrollment_info[0] != new_registration_status:
+                update_course(conn, course_code, section_id, start_date)
+                update_enrollment(conn, hashed_student_id, course_code, section_id, start_date, new_registration_status)
+        
+        conn.commit()
+        print("Update successful!")
+
+    except Exception as e:
+        conn.rollback()
+        print(f"An error occurred: {e}")
 
 @app.route('/')
 def home():
+    app.logger.debug('This is a debug message from the index route.')
     return "this is the backend :)"
 
+@app.route("/error")
+def error_route():
+    raise ValueError("This is a test error.")
 
 @app.route('/upload', methods=['GET','POST']) 
 def test_contact_info_upload():
@@ -97,8 +272,14 @@ def test_contact_info_upload():
         except InvalidFileError as e:
             return jsonify({"error": str(e)}), 400
         except Exception as e:
-            return jsonify({"error": "Error processingthe uploaded file."}), 400
-        
+            return jsonify({"error": e}), 400
+            #change back to this line when done testing
+            #return jsonify({"error": "Error processingthe uploaded file."}), 400
+        try: 
+            insert_new_student(conn, hashed_student_id, email, whatsapp, first_name, last_name, course_dict)  
+        except Exception as e:
+            return jsonify({"error": "Error inserting new student record to the database."}), 400
+
         return jsonify({
             "message": "Form submitted successfully!",
             "firstName": first_name,
@@ -108,6 +289,9 @@ def test_contact_info_upload():
             "hashed_student_id": hashed_student_id,
             "course_dict": course_dict
         }), 200
+
+        
+
     elif request.method == 'GET':
         return jsonify({"message": "Please use a POST request to submit the form data."
                         }), 200
