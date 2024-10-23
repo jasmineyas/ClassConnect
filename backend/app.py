@@ -275,7 +275,6 @@ def test_contact_info_upload():
             return jsonify({"error": e}), 400
             #change back to this line when done testing
             #return jsonify({"error": "Error processingthe uploaded file."}), 400
-        
         try: 
             insert_new_student(conn, hashed_student_id, email, whatsapp, first_name, last_name, course_dict)  
         except Exception as e:
