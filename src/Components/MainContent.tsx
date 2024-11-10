@@ -98,7 +98,7 @@ function MainContent() {
       body: formData,
     })
       .then((response) => {
-        console.log("hi");
+        console.log("retrieved response from backend");
         console.log(response);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

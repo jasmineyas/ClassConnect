@@ -6,15 +6,23 @@ import pandas as pd
 import psycopg2
 import logging 
 from dotenv import load_dotenv
-
+import re
+import warnings
 
 load_dotenv()
 DATABASE_URL = os.environ['DATABASE_URL']
 conn = psycopg2.connect(DATABASE_URL)
 
 app = Flask(__name__) 
-CORS(app) # enable CORS on the app
-app.logger.setLevel(logging.DEBUG)
+CORS(app, origins=["http://localhost:3000"])
+logging.basicConfig(level=logging.DEBUG)
+
+handler = logging.StreamHandler()  # Output to terminal
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
+app.logger.setLevel(logging.DEBUG)  # Ensure app logger is at DEBUG level
 
 class InvalidFileError(Exception):
     pass
@@ -24,12 +32,19 @@ def is_my_enrolled_courses(df):
     criteria = (bool(df.head(1).isin(["Enrolled Sections"]).any().any())) and (df.columns[0] == 'My Enrolled Courses')
     return criteria
 
+def get_section_id(section):
+    '''Extract the section id from the section string'''
+    return section.split(' - ')[0]
+
 def process_upload(file):
     '''Process the files uploaded, check if the file is indeed enrollment schedule, 
     hash the student id and save the student contact info and course info to the SQL data base'''
 
-    # process the uploaded file 
-    df = pd.read_excel(file) 
+    # process the uploaded file &  surprsess openpyxl warning: 
+    # https://stackoverflow.com/questions/66214951/deal-with-openpyxl-warning-workbook-contains-no-default-style-apply-openpyxl/66749978#66749978
+    with warnings.catch_warnings(): 
+        warnings.filterwarnings("ignore", category=UserWarning, module=re.escape('openpyxl.styles.stylesheet'))
+        df = pd.read_excel(file, engine='openpyxl') 
     if is_my_enrolled_courses(df):
         df.columns = df.iloc[1]
         df = df.drop([0,1])
@@ -42,7 +57,7 @@ def process_upload(file):
         course_dict = df.apply(lambda row: {
             'Course Code': row['Course Listing'].split(' - ')[0],
             'Course Name': row['Course Listing'].split(' - ')[1],
-            'Section': row['Section'],
+            'Section_id': get_section_id(row['Section']),
             'Instructional Format': row['Instructional Format'],
             'Meeting Patterns': row['Meeting Patterns'],
             'Delivery Mode': row['Delivery Mode'],
@@ -57,31 +72,39 @@ def process_upload(file):
 
 def insert_new_student(conn, 
                        hashed_student_id, 
-                       student_email,phone_number, 
+                       student_email,
+                    #    phone_number, 
                        whatsapp, 
                        first_name, 
-                       last_name, 
+                       last_name,
                        course_dict):
+    logging.warning(hashed_student_id)
     try:
         with conn.cursor() as cursor:
-            # Insert into Students table
-            insert_student_query = """
-            INSERT INTO Students (hashed_student_id, email, phone_number,whatsapp, first_name, last_name)
-            VALUES (%s, %s, %s);
-            """
-            cursor.execute(insert_student_query, 
-                           (hashed_student_id, 
-                            student_email, 
-                            phone_number,
-                            whatsapp, 
-                            first_name,
-                            last_name))
-            app.logger.info(f"Inserted new student: {hashed_student_id}")
-
+            if check_student_exists(conn, hashed_student_id):
+                # Student already exists in the database
+                app.logger.info(f"Student {hashed_student_id} already exists in the database.")
+            else:
+                # Insert into Students table
+                insert_student_query = """
+                INSERT INTO Students (hashed_student_id, email, whatsapp, first_name, last_name)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING;
+                """
+                cursor.execute(insert_student_query, 
+                            (hashed_student_id, 
+                                student_email, 
+                                # phone_number,
+                                whatsapp, 
+                                first_name,
+                                last_name))
+                app.logger.info(f"Inserted new student: {hashed_student_id}")
+    
             # Insert into course_sections table, but first check if the course is already in the table
             for course in course_dict:
-                if check_course_exists(conn, course_dict[course]['Course Code'], course_dict[course]['Section'], course_dict[course]['Start Date']):
+                if check_course_exists(conn, course['Course Code'], (course['Section_id']), course['Start Date']):
                     # Course already exists in the database
+                    app.logger.info(f"Course {course['Course Code']} section {course['Section_id']} already exists in the database.")
                     continue
                 else: 
                     insert_course_query = """
@@ -90,40 +113,44 @@ def insert_new_student(conn,
                     ON CONFLICT DO NOTHING;
                     """
                     cursor.execute(insert_course_query, (
-                        course_dict[course]['Course Code'],
-                        course_dict[course]['Section'],
-                        course_dict[course]['Course Name'],
-                        course_dict[course]['Instructional Format'],
-                        course_dict[course]['Delivery Mode'],
-                        course_dict[course]['Meeting Patterns'],
-                        course_dict[course]['Start Date'],
-                        course_dict[course]['End Date']))
-                app.logger.info(f"Inserted new course: {course_dict[course]['Course Code']} section {course_dict[course]['Section']}")
-
-                                                        
+                        course['Course Code'],
+                        course['Section_id'],
+                        course['Course Name'],
+                        course['Instructional Format'],
+                        course['Delivery Mode'],
+                        course['Meeting Patterns'],
+                        course['Start Date'],
+                        course['End Date']))
+                app.logger.info(f"Inserted new course: {course['Course Code']} section {course['Section_id']}")
+                                                
             # Insert into Enrollments table
             for course in course_dict:
-                course_code = course_dict[course]['Course Code']
-                section_id = course_dict[course]['Section']
-                start_date = course_dict[course]['Start Date']
-                registration_status = course_dict[course]['Registration Status']
+                course_code = course['Course Code']
+                section_id = course['Section_id']
+                start_date = course['Start Date']
+                registration_status = course['Registration Status']
                 insert_enrollment_query = """
                 INSERT INTO Enrollments (hashed_student_id, course_code, section_id, start_date, registration_status)
                 VALUES (%s, %s, %s, %s, %s);
                 """
                 cursor.execute(insert_enrollment_query, (hashed_student_id, 
-                                                         course_code, 
-                                                         section_id, 
-                                                         start_date, 
-                                                         registration_status))
-                app.logger.info(f"Inserted new enrollment for student: {hashed_student_id} in course {course_code}, section {section_id}")
+                                                            course_code, 
+                                                            section_id, 
+                                                            start_date, 
+                                                            registration_status))
+                app.logger.info(f"""Inserted new enrollment for student: {hashed_student_id} 
+                                in course {course_code}, 
+                                section {section_id}, 
+                                start_date {start_date}""")
 
         conn.commit()
         app.logger.info(f"New student {hashed_student_id} and enrollment successfully inserted.")
-
+    
     except psycopg2.IntegrityError as ie:
         conn.rollback()
-        app.logger.error(f"Integrity error occurred for student {hashed_student_id}: {ie}")
+        app.logger.error(f"Integrity error while inserting student {hashed_student_id}: {ie}")
+        return jsonify({"error": "A database integrity error occurred, possibly due to duplicate or invalid data."}), 400
+
     except psycopg2.DatabaseError as db_err:
         conn.rollback()
         app.logger.error(f"Database error occurred for student {hashed_student_id}: {db_err}")
@@ -276,8 +303,11 @@ def test_contact_info_upload():
             #change back to this line when done testing
             #return jsonify({"error": "Error processingthe uploaded file."}), 400
         try: 
-            insert_new_student(conn, hashed_student_id, email, whatsapp, first_name, last_name, course_dict)  
+            result = insert_new_student(conn, hashed_student_id, email, whatsapp, first_name, last_name, course_dict)  
+            if result is not None:
+             return result   
         except Exception as e:
+            app.logger.error(f"Error inserting new student record to the database: {e}")
             return jsonify({"error": "Error inserting new student record to the database."}), 400
 
         return jsonify({
