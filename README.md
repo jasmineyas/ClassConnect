@@ -6,7 +6,7 @@
 - [x] Define MVP scope
 - [x] Create mocks for the MVP - very simple one page app.
       ------> ended up not being so simple...
-      ![mock](/docs/mock.png)
+     <img width="914" alt="image" src="https://github.com/user-attachments/assets/d530b6c1-beb8-4659-9c8f-92e423035229" />
 - [x] Define a simple databse schema
 - [X] Look into the hashing algorithm for student IDs
 - [X] Set up the react app
